@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Comissões | Seek Comercial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <h1>Simulador de Comissões</h1>
+      <p class="subtitle">Seek Comercial</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- CENÁRIOS -->
+    <section id="scenario-bar" class="card">
+      <div class="scenario-header">
+        <h2>Cenários</h2>
+        <div class="scenario-actions">
+          <button id="btn-save" class="btn btn-primary">Salvar Cenário</button>
+          <button id="btn-compare" class="btn btn-secondary" style="display:none">Comparar</button>
+        </div>
+      </div>
+      <div id="scenario-chips" class="scenario-chips">
+        <p class="hint" style="margin:0">Nenhum cenário salvo ainda</p>
+      </div>
+    </section>
+
+    <!-- PARÂMETROS -->
+    <section id="config-panel" class="card">
+      <h2>Parâmetros</h2>
+
+      <div class="config-grid">
+        <div class="input-group">
+          <label for="agency-commission">Comissão da Agência (%)</label>
+          <input type="number" id="agency-commission" value="20" min="0" max="100" step="0.1" class="pct-input">
+        </div>
+
+        <div class="input-group">
+          <label for="agency-tax">Impostos da Agência (%)</label>
+          <input type="number" id="agency-tax" value="15" min="0" max="100" step="0.1" class="pct-input">
+        </div>
+
+        <div class="input-group">
+          <label for="num-thresholds">Número de Faixas de Comissão</label>
+          <select id="num-thresholds">
+            <option value="1">1 faixa</option>
+            <option value="2">2 faixas</option>
+            <option value="3" selected>3 faixas</option>
+            <option value="4">4 faixas</option>
+            <option value="5">5 faixas</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="threshold-section">
+        <h3>Faixas de Comissão do Vendedor</h3>
+        <p class="hint">Baseado no total de vendas mensais do vendedor</p>
+        <div class="threshold-table-wrapper">
+          <table id="threshold-table">
+            <thead>
+              <tr>
+                <th>Faixa</th>
+                <th>De (R$)</th>
+                <th>Até (R$)</th>
+                <th>Comissão (%)</th>
+              </tr>
+            </thead>
+            <tbody id="threshold-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VENDAS MENSAIS -->
+    <section id="sales-section" class="card">
+      <h2>Vendas Mensais (Valor do Deal)</h2>
+      <p class="hint">Informe o valor total de vendas por mês. A variação % é calculada automaticamente.</p>
+      <div id="monthly-sales-grid" class="monthly-grid"></div>
+    </section>
+
+    <!-- BIG NUMBERS -->
+    <section id="summary-section">
+      <div class="summary-card" data-accent="cyan">
+        <div class="card-icon">💰</div>
+        <div class="card-label">Comissão do Vendedor</div>
+        <div class="card-value" id="total-seller">R$ 0</div>
+        <div class="card-sub" id="avg-seller">Média: R$ 0/mês</div>
+      </div>
+      <div class="summary-card" data-accent="green">
+        <div class="card-icon">🏢</div>
+        <div class="card-label">Receita Líquida Agência</div>
+        <div class="card-value" id="total-agency">R$ 0</div>
+        <div class="card-sub" id="avg-agency">Média: R$ 0/mês</div>
+      </div>
+      <div class="summary-card" data-accent="lime">
+        <div class="card-icon">🎤</div>
+        <div class="card-label">Receita Influenciador</div>
+        <div class="card-value" id="total-influencer">R$ 0</div>
+        <div class="card-sub" id="avg-influencer">Média: R$ 0/mês</div>
+      </div>
+      <div class="summary-card" data-accent="yellow">
+        <div class="card-icon">📋</div>
+        <div class="card-label">Impostos Pagos</div>
+        <div class="card-value" id="total-tax">R$ 0</div>
+        <div class="card-sub" id="avg-tax">Média: R$ 0/mês</div>
+      </div>
+    </section>
+
+    <!-- GRÁFICO -->
+    <section id="chart-section" class="card">
+      <h2>Projeção 12 Meses</h2>
+      <div class="chart-container">
+        <canvas id="commission-chart"></canvas>
+      </div>
+    </section>
+
+    <!-- COMPARAÇÃO DE CENÁRIOS (hidden) -->
+    <section id="comparison-section" class="card" style="display:none">
+      <div class="comparison-header">
+        <h2>Comparar Cenários</h2>
+        <button id="btn-close-comparison" class="btn btn-ghost">Fechar</button>
+      </div>
+      <div id="comparison-checkboxes" class="comparison-checks"></div>
+      <div class="comparison-table-wrapper">
+        <table class="comparison-table">
+          <thead id="comparison-table-head"></thead>
+          <tbody id="comparison-table-body"></tbody>
+        </table>
+      </div>
+      <div class="chart-container" style="margin-top:1rem">
+        <canvas id="comparison-chart"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
