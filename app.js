@@ -268,6 +268,23 @@ function renderMonthlySales() {
     label.className = 'monthly-label';
     label.textContent = month;
 
+    function makeStepBtn(text, delta) {
+      const btn = document.createElement('button');
+      btn.className = 'step-btn';
+      btn.textContent = text;
+      btn.addEventListener('click', () => {
+        state.monthlySales[i] = Math.max(0, (state.monthlySales[i] || 0) + delta);
+        input.value = state.monthlySales[i];
+        recalculate();
+      });
+      return btn;
+    }
+
+    const stepDown = document.createElement('div');
+    stepDown.className = 'step-group';
+    stepDown.appendChild(makeStepBtn('--', -100000));
+    stepDown.appendChild(makeStepBtn('-', -10000));
+
     const inputWrap = document.createElement('div');
     inputWrap.className = 'input-currency monthly-input';
 
@@ -290,13 +307,20 @@ function renderMonthlySales() {
     inputWrap.appendChild(prefix);
     inputWrap.appendChild(input);
 
+    const stepUp = document.createElement('div');
+    stepUp.className = 'step-group';
+    stepUp.appendChild(makeStepBtn('+', 10000));
+    stepUp.appendChild(makeStepBtn('++', 100000));
+
     const badge = document.createElement('span');
     badge.className = 'growth-badge neutral';
     badge.id = `growth-badge-${i}`;
     badge.textContent = '—';
 
     cell.appendChild(label);
+    cell.appendChild(stepDown);
     cell.appendChild(inputWrap);
+    cell.appendChild(stepUp);
     cell.appendChild(badge);
     container.appendChild(cell);
   });
