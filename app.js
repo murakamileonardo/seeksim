@@ -54,13 +54,14 @@ function calculate(salesArray) {
     const taxPaid = agencyCommission * state.agencyTaxPct;
     const netAgencyCommission = agencyCommission * (1 - state.agencyTaxPct);
 
+    // Threshold is based on agency commission value, not deal value
     let sellerPct = 0;
     for (const t of state.thresholds) {
-      if (t.max === Infinity && dealValue >= t.min) {
+      if (t.max === Infinity && agencyCommission >= t.min) {
         sellerPct = t.commissionPct;
         break;
       }
-      if (dealValue >= t.min && dealValue <= t.max) {
+      if (agencyCommission >= t.min && agencyCommission <= t.max) {
         sellerPct = t.commissionPct;
         break;
       }
