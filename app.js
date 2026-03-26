@@ -141,6 +141,9 @@ function getTotals(monthly) {
 function updateSummaryCards(monthly) {
   const totals = getTotals(monthly);
 
+  document.getElementById('total-deals').textContent = formatBRL(totals.deals);
+  document.getElementById('avg-deals').textContent = `Média: ${formatBRL(totals.deals / 12)}/mês`;
+
   const sellerPctOfAgency = totals.agency + totals.seller > 0
     ? Math.round(totals.seller / (totals.agency + totals.seller) * 100)
     : 0;

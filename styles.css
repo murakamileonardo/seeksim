@@ -710,6 +710,21 @@ input[type="number"] {
   transform: translateY(-2px);
 }
 
+.summary-card-wide {
+  grid-column: 1 / -1;
+}
+
+.summary-card[data-accent="white"] {
+  border-top: 3px solid #ffffff;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.06);
+}
+.summary-card[data-accent="white"]:hover {
+  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.1);
+}
+.summary-card[data-accent="white"] .card-value {
+  color: #ffffff;
+}
+
 .summary-card[data-accent="cyan"] {
   border-top: 3px solid var(--accent-cyan);
   box-shadow: 0 4px 20px rgba(0, 240, 208, 0.08);
