@@ -9,7 +9,7 @@ function generateDefaultMonthlySales(base, growth, count) {
 
 const state = {
   agencyCommissionPct: 0.20,
-  agencyTaxPct: 0.15,
+  agencyTaxPct: 0.30,
   numThresholds: 3,
   thresholds: [
     { min: 0, max: 30000, commissionPct: 0.10 },
@@ -553,7 +553,7 @@ function loadScenariosFromStorage() {
 function seedDefaultScenarios() {
   const baseParams = {
     agencyCommissionPct: 0.20,
-    agencyTaxPct: 0.15,
+    agencyTaxPct: 0.30,
     numThresholds: 3,
     thresholds: [
       { min: 0, max: 30000, commissionPct: 0.10 },
@@ -565,7 +565,7 @@ function seedDefaultScenarios() {
 
   const conservador1Params = {
     agencyCommissionPct: 0.20,
-    agencyTaxPct: 0.15,
+    agencyTaxPct: 0.30,
     numThresholds: 3,
     thresholds: [
       { min: 0, max: 30000, commissionPct: 0.05 },
@@ -577,7 +577,7 @@ function seedDefaultScenarios() {
 
   const conservador2Params = {
     agencyCommissionPct: 0.25,
-    agencyTaxPct: 0.15,
+    agencyTaxPct: 0.30,
     numThresholds: 3,
     thresholds: [
       { min: 0, max: 50000, commissionPct: 0.05 },
