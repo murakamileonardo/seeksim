@@ -258,6 +258,7 @@ main {
 }
 
 input[type="number"],
+input[type="text"],
 select,
 .pct-input {
   background: var(--bg-primary);
@@ -271,12 +272,14 @@ select,
   width: 100%;
 }
 
-.input-currency input[type="number"] {
+.input-currency input[type="number"],
+.input-currency input[type="text"] {
   border: none;
   border-radius: 0;
 }
 
 input[type="number"]:focus,
+input[type="text"]:focus,
 select:focus {
   outline: none;
   border-color: var(--accent-cyan);
