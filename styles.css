@@ -294,33 +294,37 @@ input[type="number"] {
 .monthly-cell {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   background: var(--bg-surface-hover);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.625rem;
+  flex-wrap: nowrap;
 }
 
 .monthly-label {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  min-width: 28px;
+  min-width: 24px;
+  flex-shrink: 0;
 }
 
 .monthly-input {
   flex: 1;
+  min-width: 0;
 }
 
 .monthly-input .currency-prefix {
-  padding: 0.375rem 0.5rem;
-  font-size: 0.75rem;
+  padding: 0.375rem 0.4rem;
+  font-size: 0.6875rem;
 }
 
 .monthly-input input {
   font-size: 0.8125rem;
-  padding: 0.375rem 0.5rem;
+  font-weight: 600;
+  padding: 0.375rem 0.375rem;
+  min-width: 0;
 }
 
 /* Step buttons */
@@ -334,15 +338,15 @@ input[type="number"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border: 1px solid var(--border-color);
   border-radius: 4px;
   background: var(--bg-primary);
   color: var(--text-secondary);
   font-family: inherit;
-  font-size: 0.625rem;
+  font-size: 0.5625rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
@@ -360,13 +364,15 @@ input[type="number"] {
 }
 
 .growth-badge {
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 700;
-  padding: 0.125rem 0.375rem;
+  padding: 0.125rem 0.25rem;
   border-radius: 4px;
   white-space: nowrap;
-  min-width: 48px;
+  min-width: 40px;
   text-align: center;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .growth-badge.neutral {

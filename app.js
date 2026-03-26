@@ -19,7 +19,7 @@ const state = {
   monthlySales: generateDefaultMonthlySales(50000, 0.10, 12),
 };
 
-const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+const MONTHS = ['M01', 'M02', 'M03', 'M04', 'M05', 'M06', 'M07', 'M08', 'M09', 'M10', 'M11', 'M12'];
 const SCENARIO_COLORS = ['#00F0D0', '#80F090', '#D0F060', '#E0F050', '#FF8080', '#80C0FF'];
 
 let chart = null;
