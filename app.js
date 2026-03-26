@@ -147,8 +147,11 @@ function updateSummaryCards(monthly) {
   const sellerPctOfAgency = totals.agency + totals.seller > 0
     ? Math.round(totals.seller / (totals.agency + totals.seller) * 100)
     : 0;
+  const sellerPctOfDeals = totals.deals > 0
+    ? (totals.seller / totals.deals * 100).toFixed(1).replace('.', ',')
+    : '0';
   document.getElementById('total-seller').textContent = formatBRL(totals.seller);
-  document.getElementById('avg-seller').textContent = `Média: ${formatBRL(totals.seller / 12)}/mês · ${sellerPctOfAgency}% da agência`;
+  document.getElementById('avg-seller').textContent = `${sellerPctOfDeals}% do deal · ${sellerPctOfAgency}% da agência`;
 
   document.getElementById('total-agency').textContent = formatBRL(totals.agency);
   document.getElementById('avg-agency').textContent = `Média: ${formatBRL(totals.agency / 12)}/mês`;
