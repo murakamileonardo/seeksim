@@ -12,9 +12,9 @@ const state = {
   agencyTaxPct: 0.15,
   numThresholds: 3,
   thresholds: [
-    { min: 0, max: 30000, commissionPct: 0.05 },
-    { min: 30000.01, max: 80000, commissionPct: 0.08 },
-    { min: 80000.01, max: Infinity, commissionPct: 0.12 },
+    { min: 0, max: 30000, commissionPct: 0.10 },
+    { min: 30000.01, max: 100000, commissionPct: 0.20 },
+    { min: 100000.01, max: Infinity, commissionPct: 0.30 },
   ],
   monthlySales: generateDefaultMonthlySales(50000, 0.10, 12),
 };
@@ -411,14 +411,97 @@ function initChart() {
 function loadScenariosFromStorage() {
   try {
     const raw = localStorage.getItem('seekcomercial_scenarios');
-    scenarios = raw ? JSON.parse(raw) : [];
+    scenarios = raw ? JSON.parse(raw, (key, val) => {
+      if (val === 'Infinity') return Infinity;
+      return val;
+    }) : [];
+    // Fix Infinity deserialization from JSON (legacy data)
+    scenarios.forEach((s) => {
+      if (s.params && s.params.thresholds) {
+        s.params.thresholds.forEach((t) => {
+          if (t.max === null || t.max > 1e15) t.max = Infinity;
+        });
+      }
+    });
   } catch {
     scenarios = [];
   }
+  // Seed default scenarios on first visit
+  if (scenarios.length === 0) {
+    seedDefaultScenarios();
+  }
+}
+
+function seedDefaultScenarios() {
+  const baseParams = {
+    agencyCommissionPct: 0.20,
+    agencyTaxPct: 0.15,
+    numThresholds: 3,
+    thresholds: [
+      { min: 0, max: 30000, commissionPct: 0.10 },
+      { min: 30000.01, max: 100000, commissionPct: 0.20 },
+      { min: 100000.01, max: Infinity, commissionPct: 0.30 },
+    ],
+    monthlySales: generateDefaultMonthlySales(50000, 0.10, 12),
+  };
+
+  const conservador1Params = {
+    agencyCommissionPct: 0.20,
+    agencyTaxPct: 0.15,
+    numThresholds: 3,
+    thresholds: [
+      { min: 0, max: 30000, commissionPct: 0.05 },
+      { min: 30000.01, max: 100000, commissionPct: 0.10 },
+      { min: 100000.01, max: Infinity, commissionPct: 0.15 },
+    ],
+    monthlySales: generateDefaultMonthlySales(50000, 0.10, 12),
+  };
+
+  const conservador2Params = {
+    agencyCommissionPct: 0.25,
+    agencyTaxPct: 0.15,
+    numThresholds: 3,
+    thresholds: [
+      { min: 0, max: 50000, commissionPct: 0.05 },
+      { min: 50000.01, max: 100000, commissionPct: 0.08 },
+      { min: 100000.01, max: Infinity, commissionPct: 0.12 },
+    ],
+    monthlySales: generateDefaultMonthlySales(50000, 0.10, 12),
+  };
+
+  function calcWithParams(params) {
+    const saved = getStateSnapshot();
+    Object.assign(state, params);
+    state.thresholds = params.thresholds.map((t) => ({ ...t }));
+    state.monthlySales = [...params.monthlySales];
+    const monthly = calculate();
+    const totals = getTotals(monthly);
+    Object.assign(state, saved);
+    state.thresholds = saved.thresholds.map((t) => ({ ...t }));
+    state.monthlySales = [...saved.monthlySales];
+    return { monthly, totals };
+  }
+
+  const r1 = calcWithParams(baseParams);
+  const r2 = calcWithParams(conservador1Params);
+  const r3 = calcWithParams(conservador2Params);
+
+  scenarios = [
+    { name: 'Base - Rafa', params: baseParams, results: { ...r1.totals, monthly: r1.monthly } },
+    { name: 'Conservador - Comissão Reduzida', params: conservador1Params, results: { ...r2.totals, monthly: r2.monthly } },
+    { name: 'Conservador - Margem Agência', params: conservador2Params, results: { ...r3.totals, monthly: r3.monthly } },
+  ];
+
+  saveScenariosToStorage();
 }
 
 function saveScenariosToStorage() {
-  localStorage.setItem('seekcomercial_scenarios', JSON.stringify(scenarios));
+  // JSON.stringify converts Infinity to null, so we replace before saving
+  const data = JSON.stringify(scenarios, (key, val) => {
+    if (val === Infinity) return 'Infinity';
+    return val;
+  });
+  localStorage.setItem('seekcomercial_scenarios', data);
 }
 
 function getStateSnapshot() {
