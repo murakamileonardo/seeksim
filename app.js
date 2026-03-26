@@ -551,63 +551,46 @@ function loadScenariosFromStorage() {
 }
 
 function seedDefaultScenarios() {
-  const baseParams = {
-    agencyCommissionPct: 0.20,
-    agencyTaxPct: 0.30,
-    numThresholds: 3,
-    thresholds: [
-      { min: 0, max: 30000, commissionPct: 0.10 },
-      { min: 30000.01, max: 100000, commissionPct: 0.20 },
-      { min: 100000.01, max: Infinity, commissionPct: 0.30 },
-    ],
-    monthlySales: generateDefaultMonthlySales(50000, 0.10, 12),
-  };
-
-  const conservador1Params = {
-    agencyCommissionPct: 0.20,
-    agencyTaxPct: 0.30,
-    numThresholds: 3,
-    thresholds: [
-      { min: 0, max: 30000, commissionPct: 0.05 },
-      { min: 30000.01, max: 100000, commissionPct: 0.10 },
-      { min: 100000.01, max: Infinity, commissionPct: 0.15 },
-    ],
-    monthlySales: generateDefaultMonthlySales(50000, 0.10, 12),
-  };
-
-  const conservador2Params = {
-    agencyCommissionPct: 0.25,
-    agencyTaxPct: 0.30,
-    numThresholds: 3,
-    thresholds: [
-      { min: 0, max: 50000, commissionPct: 0.05 },
-      { min: 50000.01, max: 100000, commissionPct: 0.08 },
-      { min: 100000.01, max: Infinity, commissionPct: 0.12 },
-    ],
-    monthlySales: generateDefaultMonthlySales(50000, 0.10, 12),
-  };
-
-  function calcWithParams(params) {
-    const saved = getStateSnapshot();
-    Object.assign(state, params);
-    state.thresholds = params.thresholds.map((t) => ({ ...t }));
-    state.monthlySales = [...params.monthlySales];
-    const monthly = calculate();
-    const totals = getTotals(monthly);
-    Object.assign(state, saved);
-    state.thresholds = saved.thresholds.map((t) => ({ ...t }));
-    state.monthlySales = [...saved.monthlySales];
-    return { monthly, totals };
-  }
-
-  const r1 = calcWithParams(baseParams);
-  const r2 = calcWithParams(conservador1Params);
-  const r3 = calcWithParams(conservador2Params);
-
   scenarios = [
-    { name: 'Base - Rafa', params: baseParams, results: { ...r1.totals, monthly: r1.monthly } },
-    { name: 'Conservador - Comissão Reduzida', params: conservador1Params, results: { ...r2.totals, monthly: r2.monthly } },
-    { name: 'Conservador - Margem Agência', params: conservador2Params, results: { ...r3.totals, monthly: r3.monthly } },
+    {
+      name: 'Base - Rafa',
+      params: {
+        agencyCommissionPct: 0.20,
+        agencyTaxPct: 0.30,
+        numThresholds: 3,
+        thresholds: [
+          { min: 0, max: 30000, commissionPct: 0.10 },
+          { min: 30000.01, max: 100000, commissionPct: 0.20 },
+          { min: 100000.01, max: Infinity, commissionPct: 0.30 },
+        ],
+      },
+    },
+    {
+      name: 'Conservador - Comissão Reduzida',
+      params: {
+        agencyCommissionPct: 0.20,
+        agencyTaxPct: 0.30,
+        numThresholds: 3,
+        thresholds: [
+          { min: 0, max: 30000, commissionPct: 0.05 },
+          { min: 30000.01, max: 100000, commissionPct: 0.10 },
+          { min: 100000.01, max: Infinity, commissionPct: 0.15 },
+        ],
+      },
+    },
+    {
+      name: 'Conservador - Margem Agência',
+      params: {
+        agencyCommissionPct: 0.25,
+        agencyTaxPct: 0.30,
+        numThresholds: 3,
+        thresholds: [
+          { min: 0, max: 50000, commissionPct: 0.05 },
+          { min: 50000.01, max: 100000, commissionPct: 0.08 },
+          { min: 100000.01, max: Infinity, commissionPct: 0.12 },
+        ],
+      },
+    },
   ];
 
   saveScenariosToStorage();
@@ -628,7 +611,6 @@ function getStateSnapshot() {
     agencyTaxPct: state.agencyTaxPct,
     numThresholds: state.numThresholds,
     thresholds: state.thresholds.map((t) => ({ ...t })),
-    monthlySales: [...state.monthlySales],
   };
 }
 
@@ -642,13 +624,9 @@ function saveScenario() {
     return;
   }
 
-  const monthly = calculate();
-  const totals = getTotals(monthly);
-
   scenarios.push({
     name,
     params: getStateSnapshot(),
-    results: { ...totals, monthly },
   });
 
   nameInput.value = '';
@@ -665,15 +643,14 @@ function loadScenario(index) {
   state.agencyTaxPct = p.agencyTaxPct;
   state.numThresholds = p.numThresholds;
   state.thresholds = p.thresholds.map((t) => ({ ...t }));
-  state.monthlySales = [...p.monthlySales];
+  // monthlySales NOT overridden — vendas são independentes dos cenários
 
   // Update DOM inputs
-  document.getElementById('agency-commission').value = (state.agencyCommissionPct * 100).toFixed(1);
-  document.getElementById('agency-tax').value = (state.agencyTaxPct * 100).toFixed(1);
+  document.getElementById('agency-commission').value = Math.round(state.agencyCommissionPct * 100);
+  document.getElementById('agency-tax').value = Math.round(state.agencyTaxPct * 100);
   document.getElementById('num-thresholds').value = state.numThresholds;
 
   renderThresholds();
-  renderMonthlySales();
   recalculate();
 }
 
@@ -758,21 +735,30 @@ function onScenarioCheckChange() {
   }
 }
 
+function calcWithScenarioParams(params) {
+  const saved = getStateSnapshot();
+  state.agencyCommissionPct = params.agencyCommissionPct;
+  state.agencyTaxPct = params.agencyTaxPct;
+  state.numThresholds = params.numThresholds;
+  state.thresholds = params.thresholds.map((t) => ({ ...t }));
+  // Use current monthlySales — vendas são independentes
+  const monthly = calculate();
+  const totals = getTotals(monthly);
+  // Restore
+  state.agencyCommissionPct = saved.agencyCommissionPct;
+  state.agencyTaxPct = saved.agencyTaxPct;
+  state.numThresholds = saved.numThresholds;
+  state.thresholds = saved.thresholds.map((t) => ({ ...t }));
+  return { monthly, totals };
+}
+
 function updateComparisonFromChecks() {
   const checked = document.querySelectorAll('.scenario-cb:checked');
   const indices = Array.from(checked).map((cb) => parseInt(cb.dataset.index));
 
   const scenarioData = indices.map((idx) => {
     const s = scenarios[idx];
-    const oldState = getStateSnapshot();
-    Object.assign(state, s.params);
-    state.thresholds = s.params.thresholds.map((t) => ({ ...t }));
-    state.monthlySales = [...s.params.monthlySales];
-    const monthly = calculate();
-    const totals = getTotals(monthly);
-    Object.assign(state, oldState);
-    state.thresholds = oldState.thresholds.map((t) => ({ ...t }));
-    state.monthlySales = [...oldState.monthlySales];
+    const { monthly, totals } = calcWithScenarioParams(s.params);
     return { name: s.name, totals, monthly, colorIdx: (idx % SCENARIO_COLORS.length) + 1 };
   });
 
@@ -835,41 +821,35 @@ function renderComparisonChart(scenarioData) {
     comparisonChart.destroy();
   }
 
-  const radarLabels = ['Total Deals', 'Comissão Vendedor', 'Receita Agência', 'Receita Influenciador', 'Impostos'];
-  const metricKeys = ['deals', 'seller', 'agency', 'influencer', 'tax'];
-
-  // Find max for each metric across all scenarios (for normalization)
-  const maxValues = metricKeys.map((key) =>
-    Math.max(...scenarioData.map((s) => s.totals[key]), 1)
-  );
+  // Grouped bar chart — each metric as a group, each scenario as a bar
+  const metricLabels = ['Vendedor', 'Agência', 'Influenciador', 'Impostos'];
+  const metricKeys = ['seller', 'agency', 'influencer', 'tax'];
 
   const datasets = scenarioData.map((s) => ({
     label: s.name,
-    data: metricKeys.map((key, idx) => (s.totals[key] / maxValues[idx]) * 100),
-    rawData: metricKeys.map((key) => s.totals[key]),
+    data: metricKeys.map((key) => s.totals[key]),
+    backgroundColor: SCENARIO_COLORS[s.colorIdx] + 'CC',
     borderColor: SCENARIO_COLORS[s.colorIdx],
-    backgroundColor: SCENARIO_COLORS[s.colorIdx] + '25',
-    borderWidth: 2.5,
-    pointRadius: 5,
-    pointBackgroundColor: SCENARIO_COLORS[s.colorIdx],
-    pointBorderColor: SCENARIO_COLORS[s.colorIdx],
-    fill: true,
+    borderWidth: 1,
+    borderRadius: 4,
   }));
 
   comparisonChart = new Chart(canvas.getContext('2d'), {
-    type: 'radar',
-    data: { labels: radarLabels, datasets },
+    type: 'bar',
+    data: { labels: metricLabels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: {
           position: 'bottom',
           labels: {
             color: '#8A9A98',
-            font: { family: 'Inter', size: 12 },
+            font: { family: 'Inter', size: 11 },
             padding: 16,
             usePointStyle: true,
+            pointStyleWidth: 12,
           },
         },
         tooltip: {
@@ -880,26 +860,22 @@ function renderComparisonChart(scenarioData) {
           borderWidth: 1,
           padding: 12,
           callbacks: {
-            label: (ctx) => {
-              const raw = ctx.dataset.rawData[ctx.dataIndex];
-              return `${ctx.dataset.label}: ${formatBRL(raw)}`;
-            },
+            label: (ctx) => `${ctx.dataset.label}: ${formatBRL(ctx.parsed.y)}`,
           },
         },
       },
       scales: {
-        r: {
-          angleLines: { color: 'rgba(42, 58, 56, 0.6)' },
-          grid: { color: 'rgba(42, 58, 56, 0.5)' },
-          pointLabels: {
-            color: '#8A9A98',
-            font: { family: 'Inter', size: 11, weight: '600' },
-          },
+        x: {
+          ticks: { color: '#8A9A98', font: { family: 'Inter', size: 11 } },
+          grid: { display: false },
+        },
+        y: {
           ticks: {
-            display: false,
+            color: '#8A9A98',
+            font: { family: 'Inter', size: 11 },
+            callback: (v) => formatBRLShort(v),
           },
-          suggestedMin: 0,
-          suggestedMax: 100,
+          grid: { color: 'rgba(42, 58, 56, 0.5)' },
         },
       },
     },
