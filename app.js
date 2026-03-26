@@ -835,25 +835,33 @@ function renderComparisonChart(scenarioData) {
     comparisonChart.destroy();
   }
 
+  const radarLabels = ['Total Deals', 'Comissão Vendedor', 'Receita Agência', 'Receita Influenciador', 'Impostos'];
+  const metricKeys = ['deals', 'seller', 'agency', 'influencer', 'tax'];
+
+  // Find max for each metric across all scenarios (for normalization)
+  const maxValues = metricKeys.map((key) =>
+    Math.max(...scenarioData.map((s) => s.totals[key]), 1)
+  );
+
   const datasets = scenarioData.map((s) => ({
     label: s.name,
-    data: s.monthly.map((m) => m.dealValue),
+    data: metricKeys.map((key, idx) => (s.totals[key] / maxValues[idx]) * 100),
+    rawData: metricKeys.map((key) => s.totals[key]),
     borderColor: SCENARIO_COLORS[s.colorIdx],
-    backgroundColor: SCENARIO_COLORS[s.colorIdx] + '20',
+    backgroundColor: SCENARIO_COLORS[s.colorIdx] + '25',
     borderWidth: 2.5,
-    pointRadius: 4,
+    pointRadius: 5,
     pointBackgroundColor: SCENARIO_COLORS[s.colorIdx],
-    fill: false,
-    tension: 0.3,
+    pointBorderColor: SCENARIO_COLORS[s.colorIdx],
+    fill: true,
   }));
 
   comparisonChart = new Chart(canvas.getContext('2d'), {
-    type: 'line',
-    data: { labels: MONTHS, datasets },
+    type: 'radar',
+    data: { labels: radarLabels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: {
           position: 'bottom',
@@ -872,22 +880,26 @@ function renderComparisonChart(scenarioData) {
           borderWidth: 1,
           padding: 12,
           callbacks: {
-            label: (ctx) => `${ctx.dataset.label}: ${formatBRL(ctx.parsed.y)}`,
+            label: (ctx) => {
+              const raw = ctx.dataset.rawData[ctx.dataIndex];
+              return `${ctx.dataset.label}: ${formatBRL(raw)}`;
+            },
           },
         },
       },
       scales: {
-        x: {
-          ticks: { color: '#8A9A98', font: { family: 'Inter', size: 12 } },
+        r: {
+          angleLines: { color: 'rgba(42, 58, 56, 0.6)' },
           grid: { color: 'rgba(42, 58, 56, 0.5)' },
-        },
-        y: {
-          ticks: {
+          pointLabels: {
             color: '#8A9A98',
-            font: { family: 'Inter', size: 11 },
-            callback: (v) => formatBRLShort(v),
+            font: { family: 'Inter', size: 11, weight: '600' },
           },
-          grid: { color: 'rgba(42, 58, 56, 0.5)' },
+          ticks: {
+            display: false,
+          },
+          suggestedMin: 0,
+          suggestedMax: 100,
         },
       },
     },
