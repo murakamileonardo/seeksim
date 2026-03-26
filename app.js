@@ -38,8 +38,14 @@ const formatBRLShort = (v) => {
 };
 
 const formatPct = (v) => {
-  const pct = (v * 100).toFixed(1).replace('.', ',');
+  const pct = Math.round(v * 100);
   return v > 0 ? `+${pct}%` : `${pct}%`;
+};
+
+const formatK = (v) => {
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1).replace('.', ',')}M`;
+  if (v >= 1_000) return `${Math.round(v / 1_000)}K`;
+  return String(v);
 };
 
 // ===== Calculation Engine =====
@@ -240,8 +246,8 @@ function renderThresholds() {
     const tdPct = document.createElement('td');
     const pctInput = document.createElement('input');
     pctInput.type = 'number';
-    pctInput.value = (t.commissionPct * 100).toFixed(1);
-    pctInput.step = '0.5';
+    pctInput.value = Math.round(t.commissionPct * 100);
+    pctInput.step = '1';
     pctInput.min = '0';
     pctInput.max = '100';
     pctInput.addEventListener('input', () => {
@@ -256,74 +262,123 @@ function renderThresholds() {
 }
 
 // ===== Monthly Sales Inputs =====
+let monthsExpanded = false;
+
+function buildMonthCell(i) {
+  const cell = document.createElement('div');
+  cell.className = 'monthly-cell';
+
+  const label = document.createElement('div');
+  label.className = 'monthly-label';
+  label.textContent = MONTHS[i];
+
+  function makeStepBtn(text, delta) {
+    const btn = document.createElement('button');
+    btn.className = 'step-btn';
+    btn.textContent = text;
+    btn.addEventListener('click', () => {
+      state.monthlySales[i] = Math.max(0, (state.monthlySales[i] || 0) + delta);
+      document.getElementById(`monthly-sales-${i}`).value = state.monthlySales[i];
+      recalculate();
+    });
+    return btn;
+  }
+
+  const stepDown = document.createElement('div');
+  stepDown.className = 'step-group';
+  stepDown.appendChild(makeStepBtn('--', -100000));
+  stepDown.appendChild(makeStepBtn('-', -10000));
+
+  const inputWrap = document.createElement('div');
+  inputWrap.className = 'input-currency monthly-input';
+
+  const prefix = document.createElement('span');
+  prefix.className = 'currency-prefix';
+  prefix.textContent = 'R$';
+
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.value = state.monthlySales[i];
+  input.step = '1000';
+  input.min = '0';
+  input.id = `monthly-sales-${i}`;
+
+  input.addEventListener('input', () => {
+    state.monthlySales[i] = parseFloat(input.value) || 0;
+    recalculate();
+  });
+
+  inputWrap.appendChild(prefix);
+  inputWrap.appendChild(input);
+
+  const stepUp = document.createElement('div');
+  stepUp.className = 'step-group';
+  stepUp.appendChild(makeStepBtn('+', 10000));
+  stepUp.appendChild(makeStepBtn('++', 100000));
+
+  const badge = document.createElement('span');
+  badge.className = 'growth-badge neutral';
+  badge.id = `growth-badge-${i}`;
+  badge.textContent = '—';
+
+  cell.appendChild(label);
+  cell.appendChild(stepDown);
+  cell.appendChild(inputWrap);
+  cell.appendChild(stepUp);
+  cell.appendChild(badge);
+  return cell;
+}
+
+function copyM01ToAll() {
+  const val = state.monthlySales[0] || 0;
+  for (let i = 1; i < 12; i++) {
+    state.monthlySales[i] = val;
+    const input = document.getElementById(`monthly-sales-${i}`);
+    if (input) input.value = val;
+  }
+  recalculate();
+}
+
+function toggleMonths() {
+  monthsExpanded = !monthsExpanded;
+  const grid = document.getElementById('monthly-sales-grid');
+  const btn = document.getElementById('btn-toggle-months');
+  grid.style.display = monthsExpanded ? 'grid' : 'none';
+  btn.textContent = monthsExpanded ? 'Ocultar' : 'Expandir';
+}
+
 function renderMonthlySales() {
+  // M01 row (always visible)
+  const m01Container = document.getElementById('monthly-sales-m01');
+  m01Container.innerHTML = '';
+
+  const m01Row = document.createElement('div');
+  m01Row.className = 'monthly-m01';
+
+  const m01Cell = buildMonthCell(0);
+  m01Cell.style.flex = '1';
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'btn btn-secondary btn-sm';
+  copyBtn.innerHTML = '<span class="copy-icon">&#9112;</span> Copiar p/ todos';
+  copyBtn.title = 'Copiar valor do M01 para todos os meses';
+  copyBtn.addEventListener('click', copyM01ToAll);
+
+  m01Row.appendChild(m01Cell);
+  m01Row.appendChild(copyBtn);
+  m01Container.appendChild(m01Row);
+
+  // M02-M12 grid (collapsible)
   const container = document.getElementById('monthly-sales-grid');
   container.innerHTML = '';
 
-  MONTHS.forEach((month, i) => {
-    const cell = document.createElement('div');
-    cell.className = 'monthly-cell';
+  for (let i = 1; i < 12; i++) {
+    container.appendChild(buildMonthCell(i));
+  }
 
-    const label = document.createElement('div');
-    label.className = 'monthly-label';
-    label.textContent = month;
-
-    function makeStepBtn(text, delta) {
-      const btn = document.createElement('button');
-      btn.className = 'step-btn';
-      btn.textContent = text;
-      btn.addEventListener('click', () => {
-        state.monthlySales[i] = Math.max(0, (state.monthlySales[i] || 0) + delta);
-        input.value = state.monthlySales[i];
-        recalculate();
-      });
-      return btn;
-    }
-
-    const stepDown = document.createElement('div');
-    stepDown.className = 'step-group';
-    stepDown.appendChild(makeStepBtn('--', -100000));
-    stepDown.appendChild(makeStepBtn('-', -10000));
-
-    const inputWrap = document.createElement('div');
-    inputWrap.className = 'input-currency monthly-input';
-
-    const prefix = document.createElement('span');
-    prefix.className = 'currency-prefix';
-    prefix.textContent = 'R$';
-
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.value = state.monthlySales[i];
-    input.step = '1000';
-    input.min = '0';
-    input.id = `monthly-sales-${i}`;
-
-    input.addEventListener('input', () => {
-      state.monthlySales[i] = parseFloat(input.value) || 0;
-      recalculate();
-    });
-
-    inputWrap.appendChild(prefix);
-    inputWrap.appendChild(input);
-
-    const stepUp = document.createElement('div');
-    stepUp.className = 'step-group';
-    stepUp.appendChild(makeStepBtn('+', 10000));
-    stepUp.appendChild(makeStepBtn('++', 100000));
-
-    const badge = document.createElement('span');
-    badge.className = 'growth-badge neutral';
-    badge.id = `growth-badge-${i}`;
-    badge.textContent = '—';
-
-    cell.appendChild(label);
-    cell.appendChild(stepDown);
-    cell.appendChild(inputWrap);
-    cell.appendChild(stepUp);
-    cell.appendChild(badge);
-    container.appendChild(cell);
-  });
+  // Toggle button
+  const btn = document.getElementById('btn-toggle-months');
+  btn.addEventListener('click', toggleMonths);
 }
 
 // ===== Chart Setup =====
@@ -540,18 +595,25 @@ function getStateSnapshot() {
 }
 
 function saveScenario() {
-  const name = prompt('Nome do cenário:');
-  if (!name || !name.trim()) return;
+  const nameInput = document.getElementById('scenario-name-input');
+  const name = (nameInput.value || '').trim();
+  if (!name) {
+    nameInput.focus();
+    nameInput.style.borderColor = '#F87171';
+    setTimeout(() => { nameInput.style.borderColor = ''; }, 1500);
+    return;
+  }
 
   const monthly = calculate();
   const totals = getTotals(monthly);
 
   scenarios.push({
-    name: name.trim(),
+    name,
     params: getStateSnapshot(),
     results: { ...totals, monthly },
   });
 
+  nameInput.value = '';
   saveScenariosToStorage();
   renderScenarioBar();
 }
@@ -587,115 +649,89 @@ function deleteScenario(index) {
 }
 
 function renderScenarioBar() {
-  const chipsContainer = document.getElementById('scenario-chips');
-  chipsContainer.innerHTML = '';
+  const listContainer = document.getElementById('scenario-list');
+  listContainer.innerHTML = '';
 
-  scenarios.forEach((s, i) => {
-    const chip = document.createElement('div');
-    chip.className = 'scenario-chip';
-
-    const chipName = document.createElement('span');
-    chipName.textContent = s.name;
-    chipName.addEventListener('click', () => loadScenario(i));
-
-    const chipDelete = document.createElement('span');
-    chipDelete.className = 'chip-delete';
-    chipDelete.textContent = '\u00d7';
-    chipDelete.addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteScenario(i);
-    });
-
-    chip.appendChild(chipName);
-    chip.appendChild(chipDelete);
-    chipsContainer.appendChild(chip);
-  });
-
-  // Show/hide compare button
-  const compareBtn = document.getElementById('btn-compare');
-  compareBtn.style.display = scenarios.length >= 1 ? 'inline-flex' : 'none';
-}
-
-// ===== Comparison =====
-function openComparison() {
-  const section = document.getElementById('comparison-section');
-  section.style.display = 'block';
-  renderComparisonCheckboxes();
-  updateComparison();
-  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function closeComparison() {
-  document.getElementById('comparison-section').style.display = 'none';
-  if (comparisonChart) {
-    comparisonChart.destroy();
-    comparisonChart = null;
-  }
-}
-
-function renderComparisonCheckboxes() {
-  const container = document.getElementById('comparison-checkboxes');
-  container.innerHTML = '';
-
-  // Add "current" option
-  const currentLabel = createCheckbox(-1, 'Atual (sem salvar)', true);
-  container.appendChild(currentLabel);
-
-  scenarios.forEach((s, i) => {
-    const label = createCheckbox(i, s.name, i < 3);
-    container.appendChild(label);
-  });
-}
-
-function createCheckbox(index, name, checked) {
-  const label = document.createElement('label');
-  label.className = 'comparison-check';
-
-  const cb = document.createElement('input');
-  cb.type = 'checkbox';
-  cb.value = index;
-  cb.checked = checked;
-  cb.addEventListener('change', updateComparison);
-
-  const dot = document.createElement('span');
-  dot.className = 'color-dot';
-  const colorIdx = index === -1 ? 0 : (index % SCENARIO_COLORS.length) + 1;
-  dot.style.background = SCENARIO_COLORS[colorIdx] || SCENARIO_COLORS[0];
-
-  const text = document.createElement('span');
-  text.textContent = name;
-
-  label.appendChild(cb);
-  label.appendChild(dot);
-  label.appendChild(text);
-  return label;
-}
-
-function updateComparison() {
-  const checkboxes = document.querySelectorAll('#comparison-checkboxes input:checked');
-  const selected = Array.from(checkboxes).map((cb) => parseInt(cb.value));
-
-  if (selected.length === 0) {
-    document.getElementById('comparison-table-body').innerHTML = '<tr><td colspan="10">Selecione ao menos um cenário</td></tr>';
+  if (scenarios.length === 0) {
+    listContainer.innerHTML = '<p class="hint" style="margin:0">Nenhum cenário salvo ainda</p>';
+    // Hide comparison
+    document.getElementById('comparison-section').style.display = 'none';
     return;
   }
 
-  // Build data for each selected scenario
-  const scenarioData = selected.map((idx) => {
-    if (idx === -1) {
-      const monthly = calculate();
-      const totals = getTotals(monthly);
-      return { name: 'Atual', totals, monthly, colorIdx: 0 };
-    }
+  scenarios.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.className = 'scenario-row';
+
+    const left = document.createElement('div');
+    left.className = 'scenario-row-left';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'scenario-cb';
+    cb.dataset.index = i;
+    cb.addEventListener('change', onScenarioCheckChange);
+
+    const colorDot = document.createElement('span');
+    colorDot.className = 'color-dot';
+    colorDot.style.background = SCENARIO_COLORS[(i % SCENARIO_COLORS.length) + 1] || SCENARIO_COLORS[0];
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'scenario-name';
+    nameSpan.textContent = s.name;
+    nameSpan.addEventListener('click', () => loadScenario(i));
+
+    left.appendChild(cb);
+    left.appendChild(colorDot);
+    left.appendChild(nameSpan);
+
+    const actions = document.createElement('div');
+    actions.className = 'scenario-row-actions';
+
+    const loadBtn = document.createElement('button');
+    loadBtn.className = 'btn btn-ghost btn-xs';
+    loadBtn.textContent = 'Carregar';
+    loadBtn.addEventListener('click', () => loadScenario(i));
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-ghost btn-xs del-btn';
+    delBtn.textContent = '\u00d7';
+    delBtn.addEventListener('click', () => deleteScenario(i));
+
+    actions.appendChild(loadBtn);
+    actions.appendChild(delBtn);
+
+    row.appendChild(left);
+    row.appendChild(actions);
+    listContainer.appendChild(row);
+  });
+}
+
+function onScenarioCheckChange() {
+  const checked = document.querySelectorAll('.scenario-cb:checked');
+  const section = document.getElementById('comparison-section');
+
+  if (checked.length >= 2) {
+    section.style.display = 'block';
+    updateComparisonFromChecks();
+  } else {
+    section.style.display = 'none';
+    if (comparisonChart) { comparisonChart.destroy(); comparisonChart = null; }
+  }
+}
+
+function updateComparisonFromChecks() {
+  const checked = document.querySelectorAll('.scenario-cb:checked');
+  const indices = Array.from(checked).map((cb) => parseInt(cb.dataset.index));
+
+  const scenarioData = indices.map((idx) => {
     const s = scenarios[idx];
-    // Recalculate with saved params
     const oldState = getStateSnapshot();
     Object.assign(state, s.params);
     state.thresholds = s.params.thresholds.map((t) => ({ ...t }));
     state.monthlySales = [...s.params.monthlySales];
     const monthly = calculate();
     const totals = getTotals(monthly);
-    // Restore current state
     Object.assign(state, oldState);
     state.thresholds = oldState.thresholds.map((t) => ({ ...t }));
     state.monthlySales = [...oldState.monthlySales];
@@ -704,6 +740,13 @@ function updateComparison() {
 
   renderComparisonTable(scenarioData);
   renderComparisonChart(scenarioData);
+}
+
+// ===== Comparison =====
+function closeComparison() {
+  document.getElementById('comparison-section').style.display = 'none';
+  document.querySelectorAll('.scenario-cb').forEach((cb) => { cb.checked = false; });
+  if (comparisonChart) { comparisonChart.destroy(); comparisonChart = null; }
 }
 
 function renderComparisonTable(scenarioData) {
@@ -832,8 +875,12 @@ function bindEvents() {
   });
 
   document.getElementById('btn-save').addEventListener('click', saveScenario);
-  document.getElementById('btn-compare').addEventListener('click', openComparison);
   document.getElementById('btn-close-comparison').addEventListener('click', closeComparison);
+
+  // Allow Enter key to save scenario
+  document.getElementById('scenario-name-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') saveScenario();
+  });
 }
 
 // ===== Init =====

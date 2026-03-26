@@ -24,12 +24,12 @@
     <section id="scenario-bar" class="card">
       <div class="scenario-header">
         <h2>Cenários</h2>
-        <div class="scenario-actions">
-          <button id="btn-save" class="btn btn-primary">Salvar Cenário</button>
-          <button id="btn-compare" class="btn btn-secondary" style="display:none">Comparar</button>
-        </div>
       </div>
-      <div id="scenario-chips" class="scenario-chips">
+      <div class="save-row">
+        <input type="text" id="scenario-name-input" placeholder="Nome do cenário..." class="scenario-name-input">
+        <button id="btn-save" class="btn btn-primary btn-sm">Salvar</button>
+      </div>
+      <div id="scenario-list" class="scenario-list">
         <p class="hint" style="margin:0">Nenhum cenário salvo ainda</p>
       </div>
     </section>
@@ -38,25 +38,23 @@
     <section id="config-panel" class="card">
       <h2>Parâmetros</h2>
 
-      <div class="config-grid">
-        <div class="input-group">
-          <label for="agency-commission">Comissão da Agência (%)</label>
-          <input type="number" id="agency-commission" value="20" min="0" max="100" step="0.1" class="pct-input">
+      <div class="config-row">
+        <div class="input-group-inline">
+          <label for="agency-commission">Comissão Agência</label>
+          <div class="inline-input-wrap"><input type="number" id="agency-commission" value="20" min="0" max="100" step="1" class="pct-input-sm"><span class="input-suffix">%</span></div>
         </div>
-
-        <div class="input-group">
-          <label for="agency-tax">Impostos da Agência (%)</label>
-          <input type="number" id="agency-tax" value="15" min="0" max="100" step="0.1" class="pct-input">
+        <div class="input-group-inline">
+          <label for="agency-tax">Impostos</label>
+          <div class="inline-input-wrap"><input type="number" id="agency-tax" value="15" min="0" max="100" step="1" class="pct-input-sm"><span class="input-suffix">%</span></div>
         </div>
-
-        <div class="input-group">
-          <label for="num-thresholds">Número de Faixas de Comissão</label>
-          <select id="num-thresholds">
-            <option value="1">1 faixa</option>
-            <option value="2">2 faixas</option>
-            <option value="3" selected>3 faixas</option>
-            <option value="4">4 faixas</option>
-            <option value="5">5 faixas</option>
+        <div class="input-group-inline">
+          <label for="num-thresholds">Faixas</label>
+          <select id="num-thresholds" class="select-sm">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
           </select>
         </div>
       </div>
@@ -68,10 +66,10 @@
           <table id="threshold-table">
             <thead>
               <tr>
-                <th>Faixa</th>
-                <th>De (R$)</th>
-                <th>Até (R$)</th>
-                <th>Comissão (%)</th>
+                <th>#</th>
+                <th>De</th>
+                <th>Até</th>
+                <th>%</th>
               </tr>
             </thead>
             <tbody id="threshold-body"></tbody>
@@ -82,9 +80,12 @@
 
     <!-- VENDAS MENSAIS -->
     <section id="sales-section" class="card">
-      <h2>Vendas Mensais (Valor do Deal)</h2>
-      <p class="hint">Informe o valor total de vendas por mês. A variação % é calculada automaticamente.</p>
-      <div id="monthly-sales-grid" class="monthly-grid"></div>
+      <div class="sales-header">
+        <h2>Vendas Mensais</h2>
+        <button id="btn-toggle-months" class="btn btn-ghost btn-sm">Expandir</button>
+      </div>
+      <div id="monthly-sales-m01" class="monthly-m01-row"></div>
+      <div id="monthly-sales-grid" class="monthly-grid" style="display:none"></div>
     </section>
 
     <!-- BIG NUMBERS -->
@@ -123,13 +124,12 @@
       </div>
     </section>
 
-    <!-- COMPARAÇÃO DE CENÁRIOS (hidden) -->
+    <!-- COMPARAÇÃO DE CENÁRIOS (hidden, shown when 2+ checked) -->
     <section id="comparison-section" class="card" style="display:none">
       <div class="comparison-header">
         <h2>Comparar Cenários</h2>
-        <button id="btn-close-comparison" class="btn btn-ghost">Fechar</button>
+        <button id="btn-close-comparison" class="btn btn-ghost btn-sm">Fechar</button>
       </div>
-      <div id="comparison-checkboxes" class="comparison-checks"></div>
       <div class="comparison-table-wrapper">
         <table class="comparison-table">
           <thead id="comparison-table-head"></thead>
