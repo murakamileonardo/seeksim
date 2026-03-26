@@ -48,6 +48,40 @@ const formatK = (v) => {
   return String(v);
 };
 
+// Parse K/M notation back to number: "100K" -> 100000, "1.5M" -> 1500000
+const parseK = (str) => {
+  if (!str) return 0;
+  str = String(str).trim().toUpperCase().replace(',', '.');
+  if (str.endsWith('M')) return parseFloat(str) * 1_000_000 || 0;
+  if (str.endsWith('K')) return parseFloat(str) * 1_000 || 0;
+  return parseFloat(str) || 0;
+};
+
+// Setup a K-formatted input: shows "50K" but stores 50000
+function setupKInput(input, getValue, setValue) {
+  input.type = 'text';
+  input.value = formatK(getValue());
+  input.inputMode = 'numeric';
+
+  input.addEventListener('focus', () => {
+    input.value = getValue();
+    input.select();
+  });
+
+  input.addEventListener('blur', () => {
+    const parsed = parseK(input.value);
+    setValue(parsed);
+    input.value = formatK(parsed);
+    recalculate();
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      input.blur();
+    }
+  });
+}
+
 // ===== Calculation Engine =====
 function calculate(salesArray) {
   const sales = salesArray || state.monthlySales;
@@ -203,19 +237,19 @@ function renderThresholds() {
 
     const tdMin = document.createElement('td');
     const minInput = document.createElement('input');
-    minInput.type = 'number';
-    minInput.value = Math.round(t.min);
-    minInput.step = '1000';
     if (i === 0) {
-      minInput.value = 0;
+      minInput.type = 'text';
+      minInput.value = '0';
       minInput.classList.add('locked');
       minInput.readOnly = true;
     } else {
-      minInput.addEventListener('input', () => {
-        state.thresholds[i].min = parseFloat(minInput.value) || 0;
-        if (i > 0) state.thresholds[i - 1].max = state.thresholds[i].min - 0.01;
-        recalculate();
-      });
+      setupKInput(minInput,
+        () => state.thresholds[i].min,
+        (v) => {
+          state.thresholds[i].min = v;
+          if (i > 0) state.thresholds[i - 1].max = v - 0.01;
+        }
+      );
     }
     tdMin.appendChild(minInput);
     tr.appendChild(tdMin);
@@ -224,21 +258,20 @@ function renderThresholds() {
     if (i === n - 1) {
       const maxInput = document.createElement('input');
       maxInput.type = 'text';
-      maxInput.value = 'sem limite';
+      maxInput.value = '∞';
       maxInput.classList.add('locked');
       maxInput.readOnly = true;
       tdMax.appendChild(maxInput);
     } else {
       const maxInput = document.createElement('input');
-      maxInput.type = 'number';
-      maxInput.value = Math.round(t.max);
-      maxInput.step = '1000';
-      maxInput.addEventListener('input', () => {
-        state.thresholds[i].max = parseFloat(maxInput.value) || 0;
-        if (i + 1 < n) state.thresholds[i + 1].min = state.thresholds[i].max + 0.01;
-        renderThresholds();
-        recalculate();
-      });
+      setupKInput(maxInput,
+        () => state.thresholds[i].max,
+        (v) => {
+          state.thresholds[i].max = v;
+          if (i + 1 < n) state.thresholds[i + 1].min = v + 0.01;
+          renderThresholds();
+        }
+      );
       tdMax.appendChild(maxInput);
     }
     tr.appendChild(tdMax);
@@ -278,7 +311,8 @@ function buildMonthCell(i) {
     btn.textContent = text;
     btn.addEventListener('click', () => {
       state.monthlySales[i] = Math.max(0, (state.monthlySales[i] || 0) + delta);
-      document.getElementById(`monthly-sales-${i}`).value = state.monthlySales[i];
+      const inp = document.getElementById(`monthly-sales-${i}`);
+      inp.value = formatK(state.monthlySales[i]);
       recalculate();
     });
     return btn;
@@ -297,16 +331,11 @@ function buildMonthCell(i) {
   prefix.textContent = 'R$';
 
   const input = document.createElement('input');
-  input.type = 'number';
-  input.value = state.monthlySales[i];
-  input.step = '1000';
-  input.min = '0';
   input.id = `monthly-sales-${i}`;
-
-  input.addEventListener('input', () => {
-    state.monthlySales[i] = parseFloat(input.value) || 0;
-    recalculate();
-  });
+  setupKInput(input,
+    () => state.monthlySales[i],
+    (v) => { state.monthlySales[i] = v; }
+  );
 
   inputWrap.appendChild(prefix);
   inputWrap.appendChild(input);
@@ -334,7 +363,7 @@ function copyM01ToAll() {
   for (let i = 1; i < 12; i++) {
     state.monthlySales[i] = val;
     const input = document.getElementById(`monthly-sales-${i}`);
-    if (input) input.value = val;
+    if (input) input.value = formatK(val);
   }
   recalculate();
 }

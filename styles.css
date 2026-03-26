@@ -142,24 +142,26 @@ main {
 
 /* ===== Config Panel ===== */
 .config-row {
-  display: flex;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
-  flex-wrap: wrap;
 }
 
 .input-group-inline {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  flex: 1;
-  min-width: 80px;
 }
 
 .input-group-inline label {
   font-size: 0.6875rem;
   font-weight: 600;
   color: var(--text-secondary);
+  line-height: 1.2;
+  min-height: 1.5rem;
+  display: flex;
+  align-items: flex-end;
 }
 
 .inline-input-wrap {
@@ -176,8 +178,8 @@ main {
   font-family: inherit;
   font-size: 1rem;
   font-weight: 700;
-  padding: 0.4rem 0.5rem;
-  width: 60px;
+  padding: 0.5rem;
+  width: 100%;
   text-align: center;
   transition: border-color 0.2s;
 }
@@ -191,6 +193,7 @@ main {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-dim);
+  flex-shrink: 0;
 }
 
 .select-sm {
@@ -201,8 +204,8 @@ main {
   font-family: inherit;
   font-size: 1rem;
   font-weight: 700;
-  padding: 0.4rem 0.5rem;
-  width: 60px;
+  padding: 0.5rem;
+  width: 100%;
   text-align: center;
   cursor: pointer;
   appearance: none;
@@ -653,15 +656,17 @@ input[type="number"] {
 .comparison-table th {
   text-align: left;
   font-weight: 700;
-  padding: 0.625rem 0.75rem;
+  padding: 0.5rem;
   border-bottom: 2px solid var(--border-color);
-  font-size: 0.8125rem;
-  white-space: nowrap;
+  font-size: 0.75rem;
+  word-break: break-word;
+  max-width: 100px;
 }
 
 .comparison-table td {
-  padding: 0.5rem 0.75rem;
+  padding: 0.4rem 0.5rem;
   border-bottom: 1px solid var(--border-color);
+  font-size: 0.8125rem;
   white-space: nowrap;
 }
 
